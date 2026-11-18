@@ -1,2 +1,55 @@
-# weiching-product-catalog
-Automatic public product-index synchronization for the WEWELDER catalog
+# WEWELDER 公开商品目录自动同步
+
+这个仓库把网易外贸通当前公开商品转换成 WEWELDER 六个自定义目录页使用的紧凑 `index.json`。网站只读取这个稳定文件，不需要在每次商品变更后重新保存或发布六个页面。
+
+## 更新链路
+
+1. 在外贸通「客户履约 → 本地商品」维护商品。
+2. 定时任务每 15 分钟读取外贸通公开分类商品服务。
+3. 对公开分类服务未覆盖的历史补录商品，再读取其原生商品详情。
+4. 仅保留 `status = 1` 的在售商品；下架、未设置和已删除商品不进入新索引。
+5. 重建名称、图片、详情链接、编号、创建时间及四维分类，继承已经核实过的焊枪规格。
+6. 全量校验通过且内容哈希变化后，才提交 `index.json` 和 `catalog-report.json`。
+7. 网站下一次加载目录时读取新索引；GitHub/raw 与浏览器缓存可能带来少量额外延迟。
+
+本仓库不包含外贸通 token、后台 Cookie 或任何写接口凭据，也不会修改 CRM 商品。自动任务只有读取公开商品和提交本仓库索引的权限。
+
+## 商品维护要求
+
+- **正常新增商品必须分配有效的网站分类。** 已分类商品会被公开分类服务自动发现，无需修改本仓库。
+- 修改商品名称、主图、编号或分类后，等待下一轮同步即可。
+- 下架或删除商品后，下一轮会把它从自定义目录剔除。
+- 当前 36 个「只有一级 Plasma 分类或完全未分类」的历史在售商品，已把产品 ID 放在 `supplemental_products.json`，通过稳定的数字详情地址补录。
+- 外贸通公开分类服务不能发现未来新增的完全未分类商品。如果确实要让一个新商品保持未分类，又希望它出现在自定义目录，需要把它的产品 ID 加入 `supplemental_products.json`；正常做法是直接分配合适的网站分类。
+- 原生系统分类列表和详情页由外贸通自己控制。本任务维护的是六个自定义产品目录，不能替代平台对原生系统列表的发布逻辑。
+
+## 规格与分类边界
+
+- `verified_specs.json` 是已核实规格的展示层快照，按产品 ID 继承；`verified_spec_overrides.json` 保存逐条复核后的优先修正值。自动任务不会凭空生成 MIG/TIG 参数。
+- 新 Plasma 焊枪只在名称明确包含已知型号时沿用已经确认的型号电流与 60% 暂载率规则。
+- `legacy_dimensions.json` 保存旧目录的审核后维度，用于一级分类不完整或未分类商品的回退；普通已分类商品始终按当前 CRM 分类重建。
+- CRM 受保护记录 `2577985`（PSF 305）只读。生成器还校验其展示规格，防止意外变更。
+- 用户后续确认的新分类表，应转成明确规则后再更新生成器，不在同步时猜测新分类。
+
+## 故障保护
+
+- 请求失败、分页不完整、商品数低于安全阈值、ID 重复或 PSF 305 展示规格异常都会使任务失败。
+- 失败时不会提交空文件，线上继续使用上一版 `index.json`。
+- GitHub Actions 会创建或更新一个 `[Catalog sync] Automatic update failed` issue；在 GitHub 通知设置中开启失败工作流通知即可收到提醒。
+- 修复后可在 Actions 页面手工执行 **Run workflow**，无需重新发布网站。
+
+## 文件
+
+- `sync_catalog.py`：公开数据读取、补录、状态过滤、分类映射、规格继承与安全校验。
+- `supplemental_products.json`：公开分类服务无法发现的历史商品 ID。
+- `verified_specs.json`：已核实的展示规格。
+- `verified_spec_overrides.json`：逐条复核后的优先规格修正值。
+- `legacy_dimensions.json`：旧目录维度回退数据，不含凭据。
+- `index.json`：网站实际读取的紧凑商品索引。
+- `catalog-report.json`：最近一次成功生成的确定性 QA 报告。
+
+稳定读取地址：
+
+```text
+https://raw.githubusercontent.com/kunjing1314-bit/weiching-product-catalog/main/index.json
+```
