@@ -1,0 +1,8 @@
+{
+  "2734481": {"specs": ["450A CO₂", "60% Duty Cycle · Air Cooled", "1.0–1.6mm Wire"]},
+  "2735257": {"specs": ["380A CO₂", "60% Duty Cycle · Air Cooled", "1.0–1.6mm Wire"]},
+  "2737115": {"specs": ["450A CO₂", "60% Duty Cycle · Air Cooled", "1.0–1.6mm Wire"]},
+  "2737922": {"specs": ["500A CO₂", "60% Duty Cycle · Air Cooled", "1.0–1.6mm Wire"]},
+  "2741591": {"specs": ["500A CO₂ / 450A Mixed Gas", "100% Duty Cycle · Water Cooled", "1.0–1.6mm Wire"]},
+  "2741601": {"specs": ["500A CO₂", "100% Duty Cycle · Water Cooled", "1.0–1.6mm Wire"]}
+}
